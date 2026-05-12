@@ -59,5 +59,34 @@ def main():
     bose.show()
 
 
+class NonStockedProduct(Product):
+    def __init__(self, name, price):
+        super().__init__(name, price, quantity=0)
+
+    def set_quantity(self, quantity):
+        pass  # Quantity must always stay 0 — ignore any changes
+
+    def buy(self, quantity) -> float:
+        if quantity <= 0:
+            raise ValueError("Purchase quantity must be positive.")
+        return self.price * quantity
+
+    def show(self):
+        print(f"{self.name}, Price: {self.price}, Quantity: Unlimited")
+
+
+class LimitedProduct(Product):
+    def __init__(self, name, price, quantity, maximum):
+        super().__init__(name, price, quantity)
+        self.maximum = maximum
+
+    def buy(self, quantity) -> float:
+        if quantity > self.maximum:
+            raise Exception(f"Cannot purchase more than {self.maximum} of '{self.name}' per order.")
+        return super().buy(quantity)
+
+    def show(self):
+        print(f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Maximum per order: {self.maximum}")
+
 if __name__ == "__main__":
     main()
