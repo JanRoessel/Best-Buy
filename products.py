@@ -1,3 +1,6 @@
+from abc import ABC, abstractmethod
+
+
 class Product:
     def __init__(self, name, price, quantity):
         if name == "":
@@ -11,6 +14,7 @@ class Product:
         self.price = price
         self.quantity = quantity
         self.active = True
+        self.promotion = None
 
     def get_quantity(self) -> int:
         return self.quantity
@@ -29,8 +33,15 @@ class Product:
     def deactivate(self):
         self.active = False
 
+    def get_promotion(self):
+        return self.promotion
+
+    def set_promotion(self, promotion):
+        self.promotion = promotion
+
     def show(self):
-        print(f"{self.name}, Price: {self.price}, Quantity: {self.quantity}")
+        promo_str = f", Promotion: {self.promotion.name}" if self.promotion else ""
+        print(f"{self.name}, Price: {self.price}, Quantity: {self.quantity}{promo_str}")
 
     def buy(self, quantity) -> float:
         if quantity <= 0:
@@ -41,7 +52,44 @@ class Product:
             raise Exception(f"Not enough stock. Only {self.quantity} items available.")
 
         self.set_quantity(self.quantity - quantity)
+
+        if self.promotion:
+            return self.promotion.apply_promotion(self, quantity)
         return self.price * quantity
+
+
+class NonStockedProduct(Product):
+    def __init__(self, name, price):
+        super().__init__(name, price, quantity=0)
+
+    def set_quantity(self, quantity):
+        pass
+
+    def buy(self, quantity) -> float:
+        if quantity <= 0:
+            raise ValueError("Purchase quantity must be positive.")
+        if self.promotion:
+            return self.promotion.apply_promotion(self, quantity)
+        return self.price * quantity
+
+    def show(self):
+        promo_str = f", Promotion: {self.promotion.name}" if self.promotion else ""
+        print(f"{self.name}, Price: {self.price}, Quantity: Unlimited{promo_str}")
+
+
+class LimitedProduct(Product):
+    def __init__(self, name, price, quantity, maximum):
+        super().__init__(name, price, quantity)
+        self.maximum = maximum
+
+    def buy(self, quantity) -> float:
+        if quantity > self.maximum:
+            raise Exception(f"Cannot purchase more than {self.maximum} of '{self.name}' per order.")
+        return super().buy(quantity)
+
+    def show(self):
+        promo_str = f", Promotion: {self.promotion.name}" if self.promotion else ""
+        print(f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Maximum per order: {self.maximum}{promo_str}")
 
 
 def main():
@@ -58,35 +106,6 @@ def main():
     bose.set_quantity(1000)
     bose.show()
 
-
-class NonStockedProduct(Product):
-    def __init__(self, name, price):
-        super().__init__(name, price, quantity=0)
-
-    def set_quantity(self, quantity):
-        pass  # Quantity must always stay 0 — ignore any changes
-
-    def buy(self, quantity) -> float:
-        if quantity <= 0:
-            raise ValueError("Purchase quantity must be positive.")
-        return self.price * quantity
-
-    def show(self):
-        print(f"{self.name}, Price: {self.price}, Quantity: Unlimited")
-
-
-class LimitedProduct(Product):
-    def __init__(self, name, price, quantity, maximum):
-        super().__init__(name, price, quantity)
-        self.maximum = maximum
-
-    def buy(self, quantity) -> float:
-        if quantity > self.maximum:
-            raise Exception(f"Cannot purchase more than {self.maximum} of '{self.name}' per order.")
-        return super().buy(quantity)
-
-    def show(self):
-        print(f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Maximum per order: {self.maximum}")
 
 if __name__ == "__main__":
     main()
